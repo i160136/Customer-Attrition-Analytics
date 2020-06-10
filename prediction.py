@@ -2,7 +2,11 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-
+import base64
+import datetime
+import io
+import pandas as pd
+import dash_table
 from navbar import Navbar
 
 
@@ -314,7 +318,7 @@ FirstCol=dbc.Col(id='ft10',
                                                                     'width':'25%'}),
     html.Br(),
     html.Br(),
-    html.H4("CUSTOMER",id="result",style={'margin-left':'540px',
+    html.H4("CUSTOMER",id="result",style={'margin-left':'500px',
         'color':'#FFFFFF'})
     ],md=6#Child  dead
 )
@@ -417,6 +421,46 @@ rowft=dbc.Row(children=[FirstCol,SecondCol],style={'height':'1080px'})
 
 
 
+def parse_contents(contents, filename, date):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(
+                io.StringIO(decoded.decode('utf-8')))
+        elif 'xls' in filename:
+            # Assume that the user uploaded an excel file
+            df = pd.read_excel(io.BytesIO(decoded))
+    except Exception as e:
+        print(e)
+        return html.Div([
+            'There was an error processing this file.'
+        ])
+
+    print(df.head())
+    return html.Div([
+        html.H4('File Read!',style={'margin-left': '20px' ,'margin-top': '20px', 'color':colors['text']}),
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            style_as_list_view=True,
+    		style_cell={'padding': '5px', 'backgroundColor': '#202A3B','color':'white'},
+    		style_header={
+        	'backgroundColor': '#202A3B',
+        	'color':'white',
+        	'fontWeight': 'bold'
+    		},
+    		style_cell_conditional=[
+        		{
+            	'if': {'column_id': c},
+            	'textAlign': 'left'
+        		} for c in ['Date', 'Region']
+    			],
+            css=[{'selector': '.row', 'rule': 'margin-left: 50px'}]
+        )
+    ])
 
 
 
@@ -428,6 +472,30 @@ rowft=dbc.Row(children=[FirstCol,SecondCol],style={'height':'1080px'})
 
 def Prediction():
     layout = html.Div( style={'backgroundColor': colors['background'], 'textAlign': 'left'}, children=[nav,
+    	html.H4('Upload CSV file for Prediction',style={'margin-left': '20px' ,'margin-top': '20px', 'color':colors['text']}),
+    	dcc.Upload(
+        id='upload-data',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ]),
+        style={
+            'width': '85%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '50px',
+            'margin-left': '40px',
+            'color' : colors['text']
+        },
+        # Allow multiple files to be uploaded
+        multiple=True
+    	),
+    	html.Div(id='output-data-upload'),
+    	html.H4('Choose Features for Prediction',style={'margin-left': '20px' ,'margin-top': '20px', 'color':colors['text']}),
     rowft,
 ])
     return layout

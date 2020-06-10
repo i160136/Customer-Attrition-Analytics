@@ -54,7 +54,8 @@ def Homepage():
     layout = html.Div(children=[
     nav,html.H5(id='fedbk'),html.Canvas(id='yes',height=1080,width=1920,style={'background-image':'url("assets/2.jpg")',
     'background-repeat': 'no-repeat',
-	'background-size': '85% 75%'}),html.Div(id='my-div')
+	'background-size': '85% 75%'
+    })
     ])
     return layout
 

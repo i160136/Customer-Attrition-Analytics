@@ -28,7 +28,7 @@ data.pop('C_ID')
 features=[]
 for col in data.columns:
     features.append(col)
-M.fit(data)
+M.load()
 FI=M.featureImportance()
 
 colors = {
@@ -92,7 +92,7 @@ pie1=dcc.Graph(id='pie_plot',
               figure=fig1
               )
 
-graphRow0 = dbc.Row([dbc.Col(children=[pie1], md=6), dbc.Col(children=[pie], md=6)])
+graphRow0 = dbc.Row([dbc.Col(children=[pie1], md=6), dbc.Col(children=[pie], md=6)],style={'height':'600px'})
 
 def Report():
     layout = html.Div(style={'backgroundColor':'#202A3B'}, children=[nav,html.H3("Total Cases:     "+str(count),style={'color':'#FFFFFF','margin-top':'30px','margin-left':'20px'}),

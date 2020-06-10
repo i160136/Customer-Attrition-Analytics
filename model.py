@@ -34,6 +34,27 @@ class model:
 		self.clf1=MLPClassifier(max_iter=100,activation= 'relu', alpha= 0.0001, hidden_layer_sizes= (100,), learning_rate= 'constant', solver= 'adam')
 		self.eclf1 = VotingClassifier(estimators=[('NN',self.clf1),('lr',self.clf2) ,('xgb', self.clf3),('rf',self.clf4)], voting='soft')
 
+
+
+	def encoding(self, Sample):
+		Sample['Gender'].replace(['Male','Female'],[0,1],inplace=True)
+		Sample['Partner'].replace(['Yes','No'],[1,0],inplace=True)
+		Sample['Dependents'].replace(['Yes','No'],[1,0],inplace=True)
+		Sample['PhoneService'].replace(['Yes','No'],[1,0],inplace=True)
+		Sample['MultipleLines'].replace(['No phone service','No', 'Yes'],[0,0,1],inplace=True)
+		Sample['InternetService'].replace(['No','DSL','Fiber optic'],[0,1,2],inplace=True)
+		Sample['OnlineSecurity'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['OnlineBackup'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['DeviceProtection'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['TechSupport'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['StreamingTV'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['StreamingMovies'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
+		Sample['Contract'].replace(['Month-to-month', 'One year', 'Two year'],[0,1,2],inplace=True)
+		Sample['PaperlessBilling'].replace(['Yes','No'],[1,0],inplace=True)
+		Sample['PaymentMethod'].replace(['Electronic check', 'Mailed check', 'Bank transfer (automatic)','Credit card (automatic)'],[0,1,2,3],inplace=True)
+		return Sample
+
+		
 	def clean_data(self,data):
 		data['TotalCharges'] = pd.to_numeric(data['TotalCharges'], errors = 'coerce')
 		data.loc[data['TotalCharges'].isna()==True]
@@ -41,21 +62,7 @@ class model:
 		data[data['TotalCharges'].isna()==True] = 0
 		data['OnlineBackup'].unique()
 
-		data['Gender'].replace(['Male','Female'],[0,1],inplace=True)
-		data['Partner'].replace(['Yes','No'],[1,0],inplace=True)
-		data['Dependents'].replace(['Yes','No'],[1,0],inplace=True)
-		data['PhoneService'].replace(['Yes','No'],[1,0],inplace=True)
-		data['MultipleLines'].replace(['No phone service','No', 'Yes'],[0,0,1],inplace=True)
-		data['InternetService'].replace(['No','DSL','Fiber optic'],[0,1,2],inplace=True)
-		data['OnlineSecurity'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['OnlineBackup'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['DeviceProtection'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['TechSupport'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['StreamingTV'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['StreamingMovies'].replace(['No','Yes','No internet service'],[0,1,0],inplace=True)
-		data['Contract'].replace(['Month-to-month', 'One year', 'Two year'],[0,1,2],inplace=True)
-		data['PaperlessBilling'].replace(['Yes','No'],[1,0],inplace=True)
-		data['PaymentMethod'].replace(['Electronic check', 'Mailed check', 'Bank transfer (automatic)','Credit card (automatic)'],[0,1,2,3],inplace=True)
+		data=self.encoding(data)
 		data['Churn'].replace(['Yes','No'],[1,0],inplace=True)
 
 		data.pop('C_ID')
@@ -72,15 +79,9 @@ class model:
 		return X_train,y_train,X_test,y_test
 
 	def fit(self,data):
-		#x_train,y_train,x_test,y_test=self.clean_data(data)
-		#self.clf3.fit(x_train,y_train)
-		#self.eclf1.fit(x_train,y_train)
-		filename = 'finalized_model.sav'
-		#pickle.dump(self.eclf1, open(filename, 'wb'))
-		self.eclf1 = pickle.load(open(filename, 'rb'))
-		filename = 'model.sav'
-		#pickle.dump(self.clf3, open(filename, 'wb'))
-		self.clf3 = pickle.load(open(filename, 'rb'))
+		x_train,y_train,x_test,y_test=self.clean_data(data)
+		self.clf3.fit(x_train,y_train)
+		self.eclf1.fit(x_train,y_train)
 		return
 
 	def load(self):
@@ -101,7 +102,7 @@ class model:
 
 	def predict(self, Pvar):
 		result=self.eclf1.predict(Pvar)
-		return result[0]
+		return result
 
 
 '''if  __name__=="__main__":

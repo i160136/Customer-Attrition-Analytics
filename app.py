@@ -31,7 +31,8 @@ a='select * from dbo.Customer'
 data=pd.read_sql(a,conn)
 
 data2=deepcopy(data)
-
+data2['TotalCharges'] = pd.to_numeric(data['TotalCharges'], errors = 'coerce')
+data2.loc[data['TotalCharges'].isna()==True]
 
 
 data.pop('TotalCharges')
@@ -43,7 +44,7 @@ data.pop('C_ID')
 features=[]
 for col in data.columns:
     features.append(col)
-M.fit(data)
+M.load()
 FI=M.featureImportance()
 
 
@@ -72,12 +73,16 @@ b="select count(*) from Customer WHERE Churn = 'Yes'"
 cursor.execute(a)
 for i in cursor:
     cases=i
-card3 = create_card("Total Cases", cases[0])
-card1 = create_card("Churn Rate", "24.5%")
+
+TCases=cases[0]
+card3 = create_card("Total Cases", TCases)
 cursor.execute(b)
 for i in cursor:
     cases=i
+CRate=cases[0]*100
+CRate=CRate/TCases
 card2 = create_card("Churn Cases", cases[0])
+card1 = create_card("Churn Rate", "{0:.3f}".format(CRate)+str(' %'))
 
 
 
@@ -122,11 +127,31 @@ bar = dcc.Graph(
               }
 	)
 
-b=html.Canvas(id='yes',height=256,width=350,style={'background-image':'url("assets/dial.png")',
-    'background-repeat': 'no-repeat',
-  'background-size': '85% 75%'})
+#b=html.Canvas(id='yes',height=256,width=350,style={'background-image':'url("assets/dial.png")',
+#    'background-repeat': 'no-repeat',
+#  'background-size': '85% 75%'})
 
-graphRow0 = dbc.Row([dbc.Col(id='card1', children=[card3,b], md=3), dbc.Col(id='card2', children=[card2,card1], md=3),dbc.Col(bar,md=6)])
+
+modal = html.Div(
+    [
+        dbc.Modal(
+            [
+                dbc.ModalHeader("Status"),
+                dbc.ModalBody("The Model is being Trained",id='ModBod'),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close",color='primary', className="ml-auto",style={'display':'None'})
+                ),
+            ],
+            id="modal",backdrop="static",keyboard=False
+        ),
+    ]
+)
+
+
+
+b=dbc.Button('Train Model', id='train_model',size='lg',color='primary', style={'margin-left': '10%','margin-top':'20%','height':'20%','width':'80%'})
+x=html.Div(id="hidden",style={'display':'None'})
+graphRow0 = dbc.Row([dbc.Col(id='card1', children=[card3,modal,x,b], md=3), dbc.Col(id='card2', children=[card2,html.Br(),card1], md=3),dbc.Col(bar,md=6)])
 
 
 
@@ -187,7 +212,7 @@ def build_graph(city):
               figure=fig
               )
 
-    fig1 = px.scatter(data2, x="MonthlyCharges", y="tenure", color="Churn")
+    fig1 = px.scatter(data2, x="MonthlyCharges", y="tenure", color="Churn",hover_data=['Contract','TotalCharges'])
     fig1.update_layout({
     'title':'Churn Distribution',
     'plot_bgcolor': '#202A3B',
